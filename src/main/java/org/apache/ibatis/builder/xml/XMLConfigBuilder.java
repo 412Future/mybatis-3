@@ -96,18 +96,43 @@ public class XMLConfigBuilder extends BaseBuilder {
       throw new BuilderException("Each XMLConfigBuilder can only be used once.");
     }
     parsed = true;
+    // "/configuration" 路径表达式， 选取根元素 configuration 解析MyBatis-config.xml核心配置文件，设置Configuration
     parseConfiguration(parser.evalNode("/configuration"));
     return configuration;
   }
 
+  /**
+   * @Description: 解析MyBatis-config.xml核心配置文件，将XML中配置的属性值设置到 Configuration中
+   * @Author zdp
+   * @Date 2021-12-09 14:46
+   */
   private void parseConfiguration(XNode root) {
     try {
       // issue #117 read properties first
+      /*
+        properties标签：properties标签用于配置参数信息，比如最常见的数据库连接信息，在xml只需要${}引用就可以了
+        properties属性：
+          resource： resource 是相对路径
+          url：      url指定本地服务器或者网络的绝对路径
+       */
       propertiesElement(root.evalNode("properties"));
+      /*
+        settings标签：MyBatis的核心配置
+       */
       Properties settings = settingsAsProperties(root.evalNode("settings"));
       loadCustomVfs(settings);
+      /*
+        指定 MyBatis 所用日志的具体实现，未指定时将自动查找。
+       */
       loadCustomLogImpl(settings);
+      /*
+        typeAliases标签:
+          TypeAliases是类型的别名，用来简化全路径类名的拼写，像我们的参数类型和返回值都可能会用到，在MyBatis中预定义的类型别名，在TypeAliasesRegistry中
+       */
       typeAliasesElement(root.evalNode("typeAliases"));
+      /*
+
+       */
       pluginElement(root.evalNode("plugins"));
       objectFactoryElement(root.evalNode("objectFactory"));
       objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
@@ -127,10 +152,12 @@ public class XMLConfigBuilder extends BaseBuilder {
     if (context == null) {
       return new Properties();
     }
+    //将settings标签中的setting进行读取为 K,V 的形式 即 <setting name="" value=""/> K就是name， V就是value
     Properties props = context.getChildrenAsProperties();
-    // Check that all settings are known to the configuration class
+    //下面做了一个参数配置校验，获取Configuration中的所有setter方法，将其保存到一个setMethods的Map中，key就是属性名称
     MetaClass metaConfig = MetaClass.forClass(Configuration.class, localReflectorFactory);
     for (Object key : props.keySet()) {
+      //判断settings中配置的name属性值是否是Configuration所支持的，就是判断setMethods这个Map中是否存在setting标签中配置的name值
       if (!metaConfig.hasSetter(String.valueOf(key))) {
         throw new BuilderException("The setting " + key + " is not known.  Make sure you spelled it correctly (case sensitive).");
       }
@@ -152,25 +179,40 @@ public class XMLConfigBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * @Description: 设置MyBatis日志的具体实现
+   * @Author zdp
+   * @Date 2021-12-09 15:49
+   */
   private void loadCustomLogImpl(Properties props) {
     Class<? extends Log> logImpl = resolveClass(props.getProperty("logImpl"));
     configuration.setLogImpl(logImpl);
   }
 
+  /**
+   * @Description: 注册别名
+   * @Author zdp
+   * @Date 2021-12-09 16:09
+   */
   private void typeAliasesElement(XNode parent) {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
+        //解析TypeAliases以包名的方式配置 , 别名是JavaBean类名首字母小写
         if ("package".equals(child.getName())) {
           String typeAliasPackage = child.getStringAttribute("name");
+          //注册该package下实体类的所有别名，将package包下的所有实体类，添加到MyBatis预定义的TypeAliasesRegistry 中的 TypeAliases Map<<String, Class<?>>>中
           configuration.getTypeAliasRegistry().registerAliases(typeAliasPackage);
         } else {
+          //解析单一实体类的配置方式
           String alias = child.getStringAttribute("alias");
           String type = child.getStringAttribute("type");
           try {
             Class<?> clazz = Resources.classForName(type);
+            //没有配置name属性，默认类名首字母小写
             if (alias == null) {
               typeAliasRegistry.registerAlias(clazz);
             } else {
+            //注册指定name属性的类名
               typeAliasRegistry.registerAlias(alias, clazz);
             }
           } catch (ClassNotFoundException e) {
@@ -222,12 +264,14 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void propertiesElement(XNode context) throws Exception {
     if (context != null) {
       Properties defaults = context.getChildrenAsProperties();
+      //获取properties标签的resource 属性值
       String resource = context.getStringAttribute("resource");
       String url = context.getStringAttribute("url");
       if (resource != null && url != null) {
         throw new BuilderException("The properties element cannot specify both a URL and a resource based property file reference.  Please specify one or the other.");
       }
       if (resource != null) {
+        //读取resource 属性值，将其解析成 K, V 的形式存储在Properties中
         defaults.putAll(Resources.getResourceAsProperties(resource));
       } else if (url != null) {
         defaults.putAll(Resources.getUrlAsProperties(url));

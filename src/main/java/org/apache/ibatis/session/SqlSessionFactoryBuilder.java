@@ -1,18 +1,3 @@
-/*
- *    Copyright 2009-2021 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
 package org.apache.ibatis.session;
 
 import java.io.IOException;
@@ -26,9 +11,9 @@ import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
 
 /**
- * Builds {@link SqlSession} instances.
- *
- * @author Clinton Begin
+ * @Description: SqlSessionFactoryBuilder
+ * @Author zdp
+ * @Date 2021-12-09 13:48
  */
 public class SqlSessionFactoryBuilder {
 
@@ -60,6 +45,12 @@ public class SqlSessionFactoryBuilder {
     }
   }
 
+  /**
+   * @Description: 读取核心配置文件构建SqlSessionFactory
+   * @param: MyBatis-config.xml核心配置文件的InputStream
+   * @Author zdp
+   * @Date 2021-12-09 13:50
+   */
   public SqlSessionFactory build(InputStream inputStream) {
     return build(inputStream, null, null);
   }
@@ -72,9 +63,16 @@ public class SqlSessionFactoryBuilder {
     return build(inputStream, null, properties);
   }
 
+  /**
+   * @Description: 以上的重载方法最终都调用的是该方法，可参考该写法，兼容多参数
+   * @Author zdp
+   * @Date 2021-12-09 13:53
+   */
   public SqlSessionFactory build(InputStream inputStream, String environment, Properties properties) {
     try {
+      //XMLConfigBuilder 初始化的过程会去初始化BaseBuilder中的Configuration对象，初始化MyBatis中一些默认的配置信息，例如默认的int、long之类的别名配置，默认的TypeHandler类转换器
       XMLConfigBuilder parser = new XMLConfigBuilder(inputStream, environment, properties);
+      //Configuration config = parse.parse();  通过XPath，解析得到相应属性值，设置到Configuration中
       return build(parser.parse());
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error building SqlSession.", e);
@@ -88,6 +86,11 @@ public class SqlSessionFactoryBuilder {
     }
   }
 
+  /**
+   * @Description: 根据装载完成的Configuration对象，初始化 SqlSessionFactory 对象
+   * @Author zdp
+   * @Date 2021-12-09 17:20
+   */
   public SqlSessionFactory build(Configuration config) {
     return new DefaultSqlSessionFactory(config);
   }

@@ -678,6 +678,7 @@ public class Configuration {
     if (cacheEnabled) {
       executor = new CachingExecutor(executor);
     }
+    //责任链模式注册所有插件
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }

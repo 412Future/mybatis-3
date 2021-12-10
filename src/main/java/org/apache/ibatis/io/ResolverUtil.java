@@ -241,6 +241,9 @@ public class ResolverUtil<T> {
    * @param packageName
    *          the name of the package from which to start scanning for classes, e.g. {@code net.sourceforge.stripes}
    * @return the resolver util
+   *
+   *
+   *
    */
   public ResolverUtil<T> find(Test test, String packageName) {
     String path = getPackagePath(packageName);
@@ -248,6 +251,7 @@ public class ResolverUtil<T> {
     try {
       List<String> children = VFS.getInstance().list(path);
       for (String child : children) {
+        //这里的判断是排除文件夹
         if (child.endsWith(".class")) {
           addIfMatching(test, child);
         }
@@ -283,17 +287,18 @@ public class ResolverUtil<T> {
     try {
       String externalName = fqn.substring(0, fqn.indexOf('.')).replace('/', '.');
       ClassLoader loader = getClassLoader();
+      //判断是否开启debug级别的日志，开启就打印
       if (log.isDebugEnabled()) {
         log.debug("Checking to see if class " + externalName + " matches criteria [" + test + "]");
       }
 
       Class<?> type = loader.loadClass(externalName);
+      //判断全类名是否匹配，匹配就将其添加到一个set集合中
       if (test.matches(type)) {
         matches.add((Class<T>) type);
       }
     } catch (Throwable t) {
-      log.warn("Could not examine class '" + fqn + "'" + " due to a "
-          + t.getClass().getName() + " with message: " + t.getMessage());
+      log.warn("Could not examine class '" + fqn + "'" + " due to a " + t.getClass().getName() + " with message: " + t.getMessage());
     }
   }
 }

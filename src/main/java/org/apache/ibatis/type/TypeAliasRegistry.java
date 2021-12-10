@@ -33,7 +33,9 @@ import org.apache.ibatis.io.ResolverUtil;
 import org.apache.ibatis.io.Resources;
 
 /**
- * @author Clinton Begin
+ * @Description: MyBatis预定义的类型别名，避免写类的全路径
+ * @Author zdp
+ * @Date 2021-12-08 16:49
  */
 public class TypeAliasRegistry {
 
@@ -127,11 +129,12 @@ public class TypeAliasRegistry {
 
   public void registerAliases(String packageName, Class<?> superType) {
     ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<>();
+    //根据提供的packageName，向下扫描所有子包实体类
     resolverUtil.find(new ResolverUtil.IsA(superType), packageName);
+    //获取所有packageName包下匹配的类，依次注册
     Set<Class<? extends Class<?>>> typeSet = resolverUtil.getClasses();
     for (Class<?> type : typeSet) {
-      // Ignore inner classes and interfaces (including package-info.java)
-      // Skip also inner classes. See issue #6
+      //跳过内部类和接口
       if (!type.isAnonymousClass() && !type.isInterface() && !type.isMemberClass()) {
         registerAlias(type);
       }
@@ -141,6 +144,7 @@ public class TypeAliasRegistry {
   public void registerAlias(Class<?> type) {
     String alias = type.getSimpleName();
     Alias aliasAnnotation = type.getAnnotation(Alias.class);
+    //如果加了注解，则使用注解上的别名
     if (aliasAnnotation != null) {
       alias = aliasAnnotation.value();
     }
@@ -153,9 +157,11 @@ public class TypeAliasRegistry {
     }
     // issue #748
     String key = alias.toLowerCase(Locale.ENGLISH);
+    //校验别名是否已经注册过
     if (typeAliases.containsKey(key) && typeAliases.get(key) != null && !typeAliases.get(key).equals(value)) {
       throw new TypeException("The alias '" + alias + "' is already mapped to the value '" + typeAliases.get(key).getName() + "'.");
     }
+    //注册别名
     typeAliases.put(key, value);
   }
 
@@ -168,8 +174,7 @@ public class TypeAliasRegistry {
   }
 
   /**
-   * Gets the type aliases.
-   *
+   * Gets the type aliases. 返回一个只读的别名 Map， put时将报错
    * @return the type aliases
    * @since 3.2.2
    */
