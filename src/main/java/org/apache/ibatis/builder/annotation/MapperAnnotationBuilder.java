@@ -96,10 +96,11 @@ import org.apache.ibatis.type.UnknownTypeHandler;
  */
 public class MapperAnnotationBuilder {
 
-  private static final Set<Class<? extends Annotation>> statementAnnotationTypes = Stream
-      .of(Select.class, Update.class, Insert.class, Delete.class, SelectProvider.class, UpdateProvider.class,
-          InsertProvider.class, DeleteProvider.class)
-      .collect(Collectors.toSet());
+  private static final Set<Class<? extends Annotation>> statementAnnotationTypes =
+    Stream.of(Select.class, Update.class,
+              Insert.class, Delete.class,
+              SelectProvider.class, UpdateProvider.class,
+              InsertProvider.class, DeleteProvider.class).collect(Collectors.toSet());
 
   private final Configuration configuration;
   private final MapperBuilderAssistant assistant;
